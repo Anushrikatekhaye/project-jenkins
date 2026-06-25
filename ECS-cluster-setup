@@ -1,0 +1,17 @@
+#!/bin/bash
+# Create ECS Cluster for Jenkins
+CLUSTER_NAME="jenkins-ecs-cluster"
+REGION="us-east-1"
+
+echo "🚀 Creating ECS Cluster: $CLUSTER_NAME"
+
+# Create ECS Cluster
+aws ecs create-cluster \
+    --cluster-name $CLUSTER_NAME \
+    --region $REGION \
+    --capacity-providers FARGATE \
+    --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+    --settings name=containerInsights,value=enabled
+
+echo "✅ ECS Cluster created successfully!"
+echo "Cluster ARN: $(aws ecs describe-clusters --clusters $CLUSTER_NAME --region $REGION --query 'clusters[0].clusterArn' --output text)"
