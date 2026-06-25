@@ -1,0 +1,64 @@
+#!/bin/bash
+# Create ECS Task Execution Role
+ROLE_NAME="ecsTaskExecutionRole"
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+echo "🔑 Creating ECS Task Execution Role..."
+
+# Create the role
+aws iam create-role \
+    --role-name $ROLE_NAME \
+    --assume-role-policy-document '{
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "ecs-tasks.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+            }
+        ]
+    }'
+
+# Attach the AWS managed policy for ECS task execution
+aws iam attach-role-policy \
+    --role-name $ROLE_NAME \
+    --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+# Create custom policy for additional permissions
+aws iam put-role-policy \
+    --role-name $ROLE_NAME \
+    --policy-name JenkinsAgentPermissions \
+    --policy-document '{
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "ecs:RunTask",
+                    "ecs:RegisterTaskDefinition",
+                    "ecs:DescribeTasks",
+                    "ecs:DescribeClusters",
+                    "ecs:DescribeServices",
+                    "ecs:DescribeTaskDefinition",
+                    "ecs:ListClusters",
+                    "ecs:ListServices",
+                    "ecs:ListTaskDefinitions",
+                    "ecs:ListTasks",
+                    "ecs:StopTask",
+                    "ecs:DescribeContainerInstances",
+                    "ecs:ListContainerInstances",
+                    "ecr:GetAuthorizationToken",
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:BatchGetImage",
+                    "iam:PassRole"
+                ],
+                "Resource": "*"
+            }
+        ]
+    }'
+
+echo "✅ ECS Task Execution Role created successfully!"
+echo "Role ARN: arn:aws:iam::$ACCOUNT_ID:role/$ROLE_NAME"
